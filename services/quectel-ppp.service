@@ -6,8 +6,11 @@ Wants=network.target
 [Service]
 Type=simple
 
-ExecStart=/home/pi/cellular/venv/bin/python /home/pi/cellular/ppp_conn.py
-WorkingDirectory=/home/pi/cellular
+Environment=PYTHONUNBUFFERED=1
+
+ExecStart=/home/__INSTALL_USER__/cellular/venv/bin/python /home/__INSTALL_USER__/cellular/ppp_conn.py
+
+WorkingDirectory=/home/__INSTALL_USER__/cellular
 
 Restart=always
 RestartSec=10
