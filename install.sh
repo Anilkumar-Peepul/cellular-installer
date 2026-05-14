@@ -17,7 +17,7 @@ fi
 # -----------------------------
 # UPDATE SYSTEM
 # -----------------------------
-apt update
+apt update -o Acquire::ForceIPv4=true
 
 # -----------------------------
 # INSTALL PACKAGES
