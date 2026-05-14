@@ -17,6 +17,7 @@ Designed for industrial IoT gateways and embedded Linux deployments.
 
 ---
 
+
 # Features
 
 ## PPP Automation
@@ -73,6 +74,7 @@ Installer automatically:
 ---
 
 # Project Structure
+<img width="1536" height="1024" alt="ChatGPT Image May 14, 2026, 06_51_04 PM" src="https://github.com/user-attachments/assets/8bcea6b4-afd9-4cc0-b727-4a8793b4f79b" />
 
 ```text
 cellular-installer/
