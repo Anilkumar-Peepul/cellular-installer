@@ -1,0 +1,27 @@
+[Unit]
+Description=Network Interface Switcher Service
+After=network.target quectel-ppp.service
+Requires=quectel-ppp.service
+
+[Service]
+Type=simple
+
+ExecStart=/usr/bin/python3 /home/pi/cellular/ntw_switch.py
+
+WorkingDirectory=/home/pi/cellular
+
+Restart=always
+RestartSec=10
+
+User=root
+Group=root
+
+StandardOutput=journal
+StandardError=journal
+
+KillMode=control-group
+
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target
