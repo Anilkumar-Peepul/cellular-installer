@@ -59,7 +59,6 @@ Installer automatically:
 # Supported Hardware
 
 ## Raspberry Pi
-- Raspberry Pi 3
 - Raspberry Pi 4
 - Raspberry Pi CM4
 - Raspberry Pi 5
