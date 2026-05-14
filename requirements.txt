@@ -1,2 +1,16 @@
-pyserial
-gpiozero
+# -----------------------------
+# INSTALL VENV
+# -----------------------------
+apt install -y python3-venv
+
+# -----------------------------
+# CREATE VENV
+# -----------------------------
+python3 -m venv /home/pi/cellular/venv
+
+# -----------------------------
+# INSTALL PYTHON PACKAGES
+# -----------------------------
+/home/pi/cellular/venv/bin/pip install --upgrade pip
+
+/home/pi/cellular/venv/bin/pip install -r requirements.txt
