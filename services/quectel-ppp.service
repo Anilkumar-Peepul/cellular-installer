@@ -1,0 +1,32 @@
+[Unit]
+Description=Quectel PPP Connection Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+
+ExecStart=/usr/bin/python3 /home/pi/cellular/ppp_conn.py
+
+WorkingDirectory=/home/pi/cellular
+
+Restart=always
+RestartSec=10
+
+User=root
+Group=root
+
+StandardOutput=journal
+StandardError=journal
+
+# Optional watchdog
+WatchdogSec=30
+
+# Kill previous child processes properly
+KillMode=control-group
+
+# Allow enough startup time
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target
