@@ -3,30 +3,54 @@
 set -e
 
 echo "======================================="
-echo " Cellular Installer Starting..."
+echo " Cellular Installer"
 echo "======================================="
 
-# -----------------------------
-# CHECK ROOT
-# -----------------------------
+# -----------------------------------
+# ROOT CHECK
+# -----------------------------------
 if [ "$EUID" -ne 0 ]; then
-    echo "Please run as root"
-    exit
+    echo "Run as root"
+    exit 1
 fi
 
-# -----------------------------
-# FORCE IPV4
-# -----------------------------
-echo 'Acquire::ForceIPv4 "true";' > /etc/apt/apt.conf.d/99force-ipv4
+# -----------------------------------
+# USER INPUTS
+# -----------------------------------
 
-# -----------------------------
-# UPDATE SYSTEM
-# -----------------------------
+read -p "Linux username [pi]: " INSTALL_USER
+INSTALL_USER=${INSTALL_USER:-pi}
+
+read -p "UART Port [/dev/ttyAMA0]: " UART_PORT
+UART_PORT=${UART_PORT:-/dev/ttyAMA0}
+
+read -p "PWRKEY GPIO Pin [6]: " PWRKEY_PIN
+PWRKEY_PIN=${PWRKEY_PIN:-6}
+
+echo ""
+echo "======================================="
+echo "Installation Configuration"
+echo "======================================="
+echo "User      : $INSTALL_USER"
+echo "UART Port : $UART_PORT"
+echo "PWRKEY    : GPIO $PWRKEY_PIN"
+echo "======================================="
+
+sleep 2
+
+# -----------------------------------
+# FORCE IPV4
+# -----------------------------------
+
+echo 'Acquire::ForceIPv4 "true";' \
+> /etc/apt/apt.conf.d/99force-ipv4
+
+# -----------------------------------
+# INSTALL PACKAGES
+# -----------------------------------
+
 apt update
 
-# -----------------------------
-# INSTALL PACKAGES
-# -----------------------------
 apt install -y \
     ppp \
     minicom \
@@ -34,77 +58,107 @@ apt install -y \
     python3-venv \
     network-manager \
     lsof \
-    psmisc \
-    pkg-config \
-    libsystemd-dev \
-    gcc \
-    python3-dev
+    psmisc
 
-# -----------------------------
+# -----------------------------------
 # CREATE INSTALL DIRECTORY
-# -----------------------------
-mkdir -p /home/pi/cellular
+# -----------------------------------
 
-# -----------------------------
-# COPY PROJECT FILES
-# -----------------------------
-cp -r cellular/* /home/pi/cellular/
+INSTALL_DIR="/home/$INSTALL_USER/cellular"
 
-cp chatscripts/quectel-chat-connect /etc/chatscripts/
-cp chatscripts/quectel-chat-disconnect /etc/chatscripts/
+mkdir -p $INSTALL_DIR
+
+# -----------------------------------
+# COPY FILES
+# -----------------------------------
+
+cp -r cellular/* $INSTALL_DIR/
+
+cp chatscripts/* /etc/chatscripts/
 
 cp peers/quectel-ppp /etc/ppp/peers/
 
-cp config/config.json /home/pi/cellular/
+cp config/config.json $INSTALL_DIR/
 
-# -----------------------------
+# -----------------------------------
+# TEMPLATE REPLACEMENTS
+# -----------------------------------
+
+find $INSTALL_DIR -type f -name "*.py" \
+-exec sed -i "s|__UART_PORT__|$UART_PORT|g" {} \;
+
+find $INSTALL_DIR -type f -name "*.py" \
+-exec sed -i "s|__PWRKEY_PIN__|$PWRKEY_PIN|g" {} \;
+
+sed -i \
+"s|__UART_PORT__|$UART_PORT|g" \
+/etc/ppp/peers/quectel-ppp
+
+# -----------------------------------
 # CREATE PYTHON VENV
-# -----------------------------
-python3 -m venv /home/pi/cellular/venv
+# -----------------------------------
 
-# -----------------------------
-# INSTALL PYTHON REQUIREMENTS
-# -----------------------------
-/home/pi/cellular/venv/bin/pip install --upgrade pip
+python3 -m venv $INSTALL_DIR/venv
 
-/home/pi/cellular/venv/bin/pip install -r requirements.txt
+$INSTALL_DIR/venv/bin/pip install --upgrade pip
 
-# -----------------------------
+$INSTALL_DIR/venv/bin/pip install \
+-r requirements.txt
+
+# -----------------------------------
 # ENABLE UART
-# -----------------------------
+# -----------------------------------
+
 CONFIG_FILE="/boot/firmware/config.txt"
 
-grep -qxF 'enable_uart=1' $CONFIG_FILE || echo 'enable_uart=1' >> $CONFIG_FILE
-grep -qxF 'dtparam=uart0=on' $CONFIG_FILE || echo 'dtparam=uart0=on' >> $CONFIG_FILE
-grep -qxF 'dtoverlay=disable-bt' $CONFIG_FILE || echo 'dtoverlay=disable-bt' >> $CONFIG_FILE
+grep -qxF 'enable_uart=1' $CONFIG_FILE || \
+echo 'enable_uart=1' >> $CONFIG_FILE
+
+grep -qxF 'dtparam=uart0=on' $CONFIG_FILE || \
+echo 'dtparam=uart0=on' >> $CONFIG_FILE
+
+grep -qxF 'dtoverlay=disable-bt' $CONFIG_FILE || \
+echo 'dtoverlay=disable-bt' >> $CONFIG_FILE
 
 systemctl disable serial-getty@ttyAMA0.service || true
 
-# -----------------------------
-# COPY SERVICES
-# -----------------------------
-cp services/quectel-ppp.service /etc/systemd/system/
-cp services/interface-switcher.service /etc/systemd/system/
+# -----------------------------------
+# SERVICE FILES
+# -----------------------------------
 
-# -----------------------------
-# PERMISSIONS
-# -----------------------------
-chmod +x /home/pi/cellular/*.py
+mkdir -p /etc/systemd/system/
 
-# -----------------------------
+sed \
+"s|__INSTALL_USER__|$INSTALL_USER|g" \
+services/quectel-ppp.service \
+> /etc/systemd/system/quectel-ppp.service
+
+sed \
+"s|__INSTALL_USER__|$INSTALL_USER|g" \
+services/interface-switcher.service \
+> /etc/systemd/system/interface-switcher.service
+
+# -----------------------------------
 # ENABLE SERVICES
-# -----------------------------
+# -----------------------------------
+
+chmod +x $INSTALL_DIR/*.py
+
 systemctl daemon-reload
 
 systemctl enable quectel-ppp.service
+
 systemctl enable interface-switcher.service
 
-# -----------------------------
-# FINISH
-# -----------------------------
+echo ""
 echo "======================================="
 echo " Installation Complete"
-echo " Rebooting System..."
 echo "======================================="
+echo ""
+echo "Reboot Required"
 
-reboot
+read -p "Reboot now? [Y/n]: " REBOOT
+
+if [[ "$REBOOT" != "n" ]]; then
+    reboot
+fi
