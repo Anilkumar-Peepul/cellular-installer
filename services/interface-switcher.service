@@ -7,8 +7,11 @@ Requires=quectel-ppp.service
 [Service]
 Type=simple
 
-ExecStart=/home/pi/cellular/venv/bin/python /home/pi/cellular/ntw_switch.py
-WorkingDirectory=/home/pi/cellular
+Environment=PYTHONUNBUFFERED=1
+
+ExecStart=/home/__INSTALL_USER__/cellular/venv/bin/python /home/__INSTALL_USER__/cellular/ntw_switch.py
+
+WorkingDirectory=/home/__INSTALL_USER__/cellular
 
 Restart=always
 RestartSec=10
