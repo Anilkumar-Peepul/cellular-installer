@@ -6,7 +6,7 @@ Wants=network.target
 [Service]
 Type=simple
 
-ExecStart=/home/pi/cellular/venv/bin/python /home/pi/cellular/ppp_conn.py
+ExecStart=/home/pi/cellular/venv/bin/python /home/pi/cellular/ntw_switch.py
 WorkingDirectory=/home/pi/cellular
 
 Restart=always
