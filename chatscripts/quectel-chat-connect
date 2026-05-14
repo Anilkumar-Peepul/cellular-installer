@@ -1,0 +1,11 @@
+# /etc/chatscripts/quectel-chat-connect
+ABORT "BUSY"
+ABORT "NO CARRIER"
+ABORT "ERROR"
+TIMEOUT 30
+
+"" AT
+OK ATE0
+#OK AT+CGDCONT=1,"IP","airteliot.com" #already done in modem bringup script
+OK ATDT*99#
+CONNECT ""
